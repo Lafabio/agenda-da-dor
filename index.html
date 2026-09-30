@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Agenda da Dor - diário inteligente para mapear possíveis causas da enxaqueca e gerar relatório mensal em PDF." />
+  <meta name="theme-color" content="#7A5AF8" />
+  <title>Agenda da Dor — meu diário de enxaqueca</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%237A5AF8'/%3E%3Cpath d='M32 14c9 0 16 7 16 16 0 12-10 14-10 20h-12c0-6-10-8-10-20 0-9 7-16 16-16z' fill='white'/%3E%3Ccircle cx='32' cy='30' r='6' fill='%237A5AF8'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ================= APP ================= -->
+  <div class="app" id="app">
+
+    <nav class="nav" aria-label="Navegação principal">
+      <div class="nav-brand">
+        <span class="brand-mark">A</span>
+        <span class="nav-brand-text">Agenda da Dor</span>
+      </div>
+      <button class="nav-item active" data-view="hoje" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3 0 5.5 2.3 5.5 5.3 0 4-3.8 5-3.8 8.2h-3.4c0-3.2-3.8-4.2-3.8-8.2C6.5 5.3 9 3 12 3z"/><path d="M10 19h4v2h-4z"/></svg>
+        <span>Hoje</span>
+      </button>
+      <button class="nav-item" data-view="calendario" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>Calendário</span>
+      </button>
+      <button class="nav-item" data-view="padroes" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>Padrões</span>
+      </button>
+      <button class="nav-item" data-view="relatorio" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 3v5h5M9 13h6M9 17h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>Relatório</span>
+      </button>
+      <button class="nav-item nav-settings" data-action="settings" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M18.5 5.5l-2.1 2.1M7.6 16.4l-2.1 2.1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>Ajustes</span>
+      </button>
+    </nav>
+
+    <main class="main" id="main">
+
+      <!-- ============ VIEW: HOJE ============ -->
+      <section class="view active" id="view-hoje" aria-label="Hoje">
+        <header class="view-head">
+          <div>
+            <p class="eyebrow" id="todayWeekday">—</p>
+            <h1 id="todayGreeting">Oi!</h1>
+            <p class="sub" id="todayDate">—</p>
+          </div>
+          <button class="btn btn-primary btn-lg" data-action="new-episode" type="button">
+            <svg viewBox="0 0 24 24" class="btn-ico" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+            Registrar dor
+          </button>
+        </header>
+
+        <div class="grid-2">
+          <div class="card" id="checkinCard">
+            <div class="card-head">
+              <h2>Check-in do dia</h2>
+              <span class="pill" id="checkinPill">pendente</span>
+            </div>
+            <p class="muted" id="checkinSummary">Conte como foi o seu dia: sono, estresse, água e os fatores presentes. Leva 30 segundos!</p>
+            <div id="checkinTags" class="chip-row"></div>
+            <div class="card-actions">
+              <button class="btn btn-soft" data-action="checkin" type="button" id="checkinBtn">Fazer check-in</button>
+            </div>
+          </div>
+
+          <div class="card card-accent">
+            <div class="card-head"><h2>Como funciona</h2></div>
+            <ol class="steps">
+              <li><strong>Check-in</strong> — marque como foi o dia e os fatores presentes (mesmo sem dor).</li>
+              <li><strong>Registrar dor</strong> — quando doer, anote intensidade, lugar e sintomas.</li>
+              <li><strong>Padrões</strong> — o app cruza os dados e mostra as possíveis causas.</li>
+              <li><strong>Relatório</strong> — exporte o PDF mensal para levar ao médico.</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>Crises de hoje</h2>
+            <span class="pill pill-ghost" id="todayEpisodeCount">0</span>
+          </div>
+          <div id="todayEpisodes" class="episode-list">
+            <p class="empty">Nenhuma crise registrada hoje. Se doer, toque em "Registrar dor".</p>
+          </div>
+        </div>
+
+        <div class="card card-tip">
+          <h3>Dica de hoje</h3>
+          <p id="dailyTip">Registre também os dias BONS. Sem dias sem dor, o app não consegue descobrir qual fator faz diferença.</p>
+        </div>
+      </section>
+
+      <!-- ============ VIEW: CALENDÁRIO ============ -->
+      <section class="view" id="view-calendario" aria-label="Calendário">
+        <header class="view-head">
+          <div>
+            <p class="eyebrow">Sua história</p>
+            <h1>Calendário</h1>
+            <p class="sub">Cada ponto é um dia: a cor mostra a pior dor do dia.</p>
+          </div>
+          <div class="month-nav">
+            <button class="btn btn-ghost" data-action="cal-prev" type="button" aria-label="Mês anterior">&#8249;</button>
+            <span class="month-label" id="calMonthLabel">—</span>
+            <button class="btn btn-ghost" data-action="cal-next" type="button" aria-label="Próximo mês">&#8250;</button>
+          </div>
+        </header>
+
+        <div class="card">
+          <div class="cal-weekdays" aria-hidden="true">
+            <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+          <div class="legend">
+            <span><i class="dot" style="background:#2ED3A7"></i>0–2</span>
+            <span><i class="dot" style="background:#84CC16"></i>3–4</span>
+            <span><i class="dot" style="background:#FDBA2D"></i>5–6</span>
+            <span><i class="dot" style="background:#F97316"></i>7–8</span>
+            <span><i class="dot" style="background:#EF4444"></i>9–10</span>
+            <span><i class="dot dot-check"></i>check-in</span>
+            <span><i class="dot dot-empty"></i>sem registro</span>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head"><h2>Resumo deste mês</h2></div>
+            <div class="stat-grid" id="calStats"></div>
+          </div>
+          <div class="card card-tip">
+            <h3>Como ler o calendário</h3>
+            <p>Dias coloridos têm dor registrada — quanto mais quente a cor, mais forte. O contorno claro marca dias com check-in sem dor: são eles que revelam o que <em>protege</em>.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ VIEW: PADRÕES ============ -->
+      <section class="view" id="view-padroes" aria-label="Padrões">
+        <header class="view-head">
+          <div>
+            <p class="eyebrow">Causas e benefícios</p>
+            <h1>Padrões</h1>
+            <p class="sub">O app cruza seus registros para achar possíveis gatilhos e o que te ajuda.</p>
+          </div>
+          <div class="month-nav">
+            <button class="btn btn-ghost" data-action="pat-prev" type="button" aria-label="Mês anterior">&#8249;</button>
+            <span class="month-label" id="patMonthLabel">—</span>
+            <button class="btn btn-ghost" data-action="pat-next" type="button" aria-label="Próximo mês">&#8250;</button>
+          </div>
+        </header>
+
+        <div id="patternsBody"></div>
+      </section>
+
+      <!-- ============ VIEW: RELATÓRIO ============ -->
+      <section class="view" id="view-relatorio" aria-label="Relatório mensal">
+        <header class="view-head">
+          <div>
+            <p class="eyebrow">PDF mensal</p>
+            <h1>Relatório</h1>
+            <p class="sub">Pré-visualização do relatório do mês — é exatamente o que sai no PDF.</p>
+          </div>
+          <div class="report-actions">
+            <div class="month-nav">
+              <button class="btn btn-ghost" data-action="rep-prev" type="button" aria-label="Mês anterior">&#8249;</button>
+              <span class="month-label" id="repMonthLabel">—</span>
+              <button class="btn btn-ghost" data-action="rep-next" type="button" aria-label="Próximo mês">&#8250;</button>
+            </div>
+            <button class="btn btn-primary" data-action="export-pdf" type="button" id="exportPdfBtn">
+              <svg viewBox="0 0 24 24" class="btn-ico" aria-hidden="true"><path d="M12 3v11M7.5 10.5 12 15l4.5-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              Baixar PDF
+            </button>
+          </div>
+        </header>
+
+        <div class="print-hint card card-tip">
+          <h3>Como salvar o PDF</h3>
+          <p>Clique em <strong>Baixar PDF</strong> e na janela de impressao escolha destino <strong>"Salvar como PDF"</strong> (no celular: <em>Salvar em Arquivos</em>). O nome do arquivo ja vem preenchido.</p>
+        </div>
+
+        <div id="reportPreview" class="report-preview"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ================= MODAIS ================= -->
+
+  <!-- Onboarding -->
+  <div class="modal" id="modal-onboarding" hidden>
+    <div class="modal-card modal-card-intro">
+      <div class="intro-art" aria-hidden="true">
+        <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="#EEEBFF"/><path d="M60 26c14 0 25 10.5 25 24 0 18-16 21-16 32H51c0-11-16-14-16-32 0-13.5 11-24 25-24z" fill="#7A5AF8"/><circle cx="60" cy="50" r="9" fill="#fff"/><path d="M52 88h16v6H52z" fill="#7A5AF8"/></svg>
+      </div>
+      <h1>Agenda da Dor</h1>
+      <p class="intro-sub">Seu diário inteligente para descobrir o que provoca (e o que alivia) suas dores de cabeça.</p>
+      <form id="onboardingForm">
+        <label class="field">
+          <span>Como podemos te chamar?</span>
+          <input type="text" id="obName" maxlength="40" placeholder="Seu nome (opcional)" autocomplete="given-name" />
+        </label>
+        <ul class="intro-list">
+          <li>1) Faça o <strong>check-in</strong> do dia (30 segundos)</li>
+          <li>2) Registre as <strong>crises</strong> quando doer</li>
+          <li>3) Veja os <strong>padrões</strong> e exporte o <strong>PDF mensal</strong></li>
+        </ul>
+        <p class="privacy-note">Tudo fica salvo apenas neste dispositivo. Nada é enviado para a internet.</p>
+        <button class="btn btn-primary btn-lg btn-block" type="submit">Começar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Check-in do dia -->
+  <div class="modal" id="modal-checkin" hidden>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow" id="checkinDateLabel">—</p>
+          <h2>Check-in do dia</h2>
+        </div>
+        <button class="icon-btn" data-close type="button" aria-label="Fechar">X</button>
+      </div>
+      <form id="checkinForm" class="form">
+        <div class="form-grid">
+          <label class="field">
+            <span>Horas de sono <output id="ciSleepOut">7,5h</output></span>
+            <input type="range" name="sleepHours" min="0" max="14" step="0.5" value="7.5" data-out="ciSleepOut" data-format="h" />
+          </label>
+          <label class="field">
+            <span>Qualidade do sono</span>
+            <div class="segmented">
+              <label><input type="radio" name="sleepQuality" value="1" /><span>Péssima</span></label>
+              <label><input type="radio" name="sleepQuality" value="2" /><span>Ruim</span></label>
+              <label><input type="radio" name="sleepQuality" value="3" checked /><span>Ok</span></label>
+              <label><input type="radio" name="sleepQuality" value="4" /><span>Boa</span></label>
+              <label><input type="radio" name="sleepQuality" value="5" /><span>Ótima</span></label>
+            </div>
+          </label>
+          <label class="field">
+            <span>Estresse <output id="ciStressOut">2/5</output></span>
+            <input type="range" name="stress" min="1" max="5" step="1" value="2" data-out="ciStressOut" data-format="x5" />
+          </label>
+          <label class="field">
+            <span>Água em copos <output id="ciHydOut">5</output></span>
+            <input type="range" name="hydration" min="0" max="12" step="1" value="5" data-out="ciHydOut" data-format="n" />
+          </label>
+          <label class="field">
+            <span>Tempo de tela <output id="ciScreenOut">2h</output></span>
+            <input type="range" name="screenHours" min="0" max="12" step="0.5" value="2" data-out="ciScreenOut" data-format="h" />
+          </label>
+          <label class="field">
+            <span>Humor</span>
+            <div class="segmented">
+              <label><input type="radio" name="mood" value="1" /><span>Péssimo</span></label>
+              <label><input type="radio" name="mood" value="2" /><span>Ruim</span></label>
+              <label><input type="radio" name="mood" value="3" checked /><span>Normal</span></label>
+              <label><input type="radio" name="mood" value="4" /><span>Bom</span></label>
+              <label><input type="radio" name="mood" value="5" /><span>Ótimo</span></label>
+            </div>
+          </label>
+        </div>
+
+        <div class="switch-row">
+          <label class="switch"><input type="checkbox" name="mealsOk" checked /><span></span>Comi todas as refeições hoje</label>
+        </div>
+
+        <div class="field">
+          <span class="field-title">Ciclo / hormônios <small>(opcional)</small></span>
+          <div class="segmented segmented-wrap">
+            <label><input type="radio" name="cycle" value="none" checked /><span>Sem mudanças</span></label>
+            <label><input type="radio" name="cycle" value="menstruacao" /><span>Menstruando</span></label>
+            <label><input type="radio" name="cycle" value="pms" /><span>Faltando / TPM</span></label>
+            <label><input type="radio" name="cycle" value="pos" /><span>Depois</span></label>
+            <label><input type="radio" name="cycle" value="na" /><span>Não registrar</span></label>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field-title">Fatores presentes hoje <small>— marque tudo que aconteceu, mesmo sem dor</small></span>
+          <div id="checkinTriggers"></div>
+        </div>
+
+        <label class="field">
+          <span>Anotação <small>(opcional)</small></span>
+          <textarea name="notes" rows="2" maxlength="300" placeholder="Ex.: dia de prova, festa na escola..."></textarea>
+        </label>
+
+        <div class="modal-actions">
+          <button class="btn btn-ghost" data-close type="button">Cancelar</button>
+          <button class="btn btn-primary" type="submit">Salvar check-in</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Registrar dor (episódio) -->
+  <div class="modal" id="modal-episode" hidden>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow" id="episodeDateLabel">—</p>
+          <h2 id="episodeTitle">Registrar dor</h2>
+        </div>
+        <button class="icon-btn" data-close type="button" aria-label="Fechar">X</button>
+      </div>
+      <form id="episodeForm" class="form">
+        <input type="hidden" name="id" />
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Que horas começou?</span>
+            <input type="time" name="time" required />
+          </label>
+          <label class="field">
+            <span>Quanto tempo durou? <small>(mais ou menos)</small></span>
+            <select name="durationMin">
+              <option value="15">15 min</option>
+              <option value="30">30 min</option>
+              <option value="45">45 min</option>
+              <option value="60" selected>1 hora</option>
+              <option value="90">1h30</option>
+              <option value="120">2 horas</option>
+              <option value="180">3 horas</option>
+              <option value="300">mais de 3 horas</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="field">
+          <span class="field-title">Intensidade da dor <output id="epIntensityOut">5/10 — Moderada</output></span>
+          <input type="range" class="intensity-range" name="intensity" min="1" max="10" step="1" value="5" data-out="epIntensityOut" data-format="pain" />
+          <div class="scale-marks"><span>1</span><span>3</span><span>5</span><span>7</span><span>10</span></div>
+        </div>
+
+        <div class="field">
+          <span class="field-title">Onde dói? <small>(pode marcar mais de um)</small></span>
+          <div class="headmap" id="headMap">
+            <svg class="head-shape" viewBox="0 0 220 240" aria-hidden="true">
+              <path d="M110 18c44 0 72 30 72 72 0 30-10 48-24 62-9 9-14 16-16 30l-2 20c-1 9-8 14-18 14h-44c-10 0-17-5-18-14l-2-20c-2-14-7-21-16-30C36 138 26 120 26 90c0-42 28-72 72-72z" fill="#EEEBFF" stroke="#C9C2F8" stroke-width="3"/>
+              <path d="M96 216h28v14H96zM84 234h52" fill="none" stroke="#C9C2F8" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <label class="zone" style="left:50%;top:12%"><input type="checkbox" name="locations" value="topo" /><span>Topo</span></label>
+            <label class="zone" style="left:50%;top:30%"><input type="checkbox" name="locations" value="testa" /><span>Testa</span></label>
+            <label class="zone" style="left:50%;top:46%"><input type="checkbox" name="locations" value="olhos" /><span>Olhos</span></label>
+            <label class="zone" style="left:17%;top:42%"><input type="checkbox" name="locations" value="tempa_esq" /><span>Têmpora E</span></label>
+            <label class="zone" style="left:83%;top:42%"><input type="checkbox" name="locations" value="tempa_dir" /><span>Têmpora D</span></label>
+            <label class="zone" style="left:50%;top:64%"><input type="checkbox" name="locations" value="rosto" /><span>Rosto</span></label>
+          </div>
+          <div class="chip-row" id="extraLocations">
+            <label class="chip"><input type="checkbox" name="locations" value="nuca" /><span>Nuca</span></label>
+            <label class="chip"><input type="checkbox" name="locations" value="pescoco" /><span>Pescoço</span></label>
+            <label class="chip"><input type="checkbox" name="locations" value="lado_esq" /><span>Metade esquerda</span></label>
+            <label class="chip"><input type="checkbox" name="locations" value="lado_dir" /><span>Metade direita</span></label>
+            <label class="chip"><input type="checkbox" name="locations" value="inteira" /><span>Cabeça inteira</span></label>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field-title">Sintomas junto com a dor</span>
+          <div class="chip-row" id="episodeSymptoms"></div>
+        </div>
+
+        <div class="field">
+          <span class="field-title">O que você tentou para aliviar?</span>
+          <div id="episodeReliefs"></div>
+        </div>
+
+        <div class="field" id="reliefResultField" hidden>
+          <span class="field-title">Melhorou?</span>
+          <div class="segmented segmented-wrap">
+            <label><input type="radio" name="reliefResult" value="total" /><span>Passou tudo</span></label>
+            <label><input type="radio" name="reliefResult" value="parcial" /><span>Melhorou um pouco</span></label>
+            <label><input type="radio" name="reliefResult" value="nenhum" checked /><span>Não melhorou</span></label>
+            <label><input type="radio" name="reliefResult" value="na" /><span>Não tentei nada</span></label>
+          </div>
+        </div>
+
+        <label class="field">
+          <span>Anotação <small>(opcional)</small></span>
+          <textarea name="notes" rows="2" maxlength="300" placeholder="Ex.: começou depois da aula de educação física..."></textarea>
+        </label>
+
+        <div class="modal-actions">
+          <button class="btn btn-danger" type="button" id="deleteEpisodeBtn" hidden>Excluir</button>
+          <span class="spacer"></span>
+          <button class="btn btn-ghost" data-close type="button">Cancelar</button>
+          <button class="btn btn-primary" type="submit">Salvar crise</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Detalhe do dia -->
+  <div class="modal" id="modal-day" hidden>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow" id="dayModalWeekday">—</p>
+          <h2 id="dayModalTitle">—</h2>
+        </div>
+        <button class="icon-btn" data-close type="button" aria-label="Fechar">X</button>
+      </div>
+      <div id="dayModalBody" class="day-body"></div>
+      <div class="modal-actions">
+        <button class="btn btn-danger-soft" type="button" id="deleteDayBtn">Apagar dia</button>
+        <span class="spacer"></span>
+        <button class="btn btn-soft" type="button" data-action="checkin-from-day">Check-in</button>
+        <button class="btn btn-primary" type="button" data-action="new-episode-from-day">+ Dor</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ajustes -->
+  <div class="modal" id="modal-settings" hidden>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow">Preferências</p>
+          <h2>Ajustes</h2>
+        </div>
+        <button class="icon-btn" data-close type="button" aria-label="Fechar">X</button>
+      </div>
+
+      <div class="form">
+        <label class="field">
+          <span>Seu nome (aparece no relatório)</span>
+          <input type="text" id="settingsName" maxlength="40" placeholder="Ex.: Maria" />
+        </label>
+
+        <div class="field">
+          <span class="field-title">Seus dados</span>
+          <div class="btn-row">
+            <button class="btn btn-soft" type="button" id="exportDataBtn">Exportar backup (.json)</button>
+            <button class="btn btn-soft" type="button" id="importDataBtn">Importar backup</button>
+            <input type="file" id="importFile" accept="application/json,.json" hidden />
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-soft" type="button" id="sampleDataBtn">Ver com dados de exemplo</button>
+            <button class="btn btn-danger-soft" type="button" id="wipeDataBtn">Apagar todos os dados</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field-title">Sobre</span>
+          <p class="muted small">Agenda da Dor — diário pessoal de enxaqueca para adolescentes. Funciona offline; os dados ficam apenas neste dispositivo (localStorage do navegador). A análise é estatística simples de correlação (fator presente vs. dias com dor) e não substitui avaliação médica.</p>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-primary" type="button" id="saveSettingsBtn">Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmação genérica -->
+  <div class="modal" id="modal-confirm" hidden>
+    <div class="modal-card modal-card-small">
+      <div class="modal-head">
+        <h2 id="confirmTitle">Tem certeza?</h2>
+        <button class="icon-btn" data-close type="button" aria-label="Fechar">X</button>
+      </div>
+      <p class="muted" id="confirmText">—</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" data-close type="button">Cancelar</button>
+        <button class="btn btn-danger" type="button" id="confirmOkBtn">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="printRoot" class="print-root" aria-hidden="true"></div>
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="js/catalog.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/insights.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/report.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
