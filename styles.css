@@ -892,6 +892,19 @@ input[type="range"] {
 .notes-lines { display: flex; flex-direction: column; gap: 22px; margin-top: 10px; }
 .notes-lines span { border-bottom: 1.5px dashed var(--line-strong); display: block; }
 
+.report-note {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: var(--mint-50, #F4FBF9);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.report-note h4 { margin: 0 0 6px; font-size: 13.5px; color: var(--ink); }
+.report-note p { margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); }
+
+.table-crises td { font-size: 12.5px; line-height: 1.45; vertical-align: top; }
+.table-crises td em { color: var(--ink-mute); }
+
 .report-foot {
   border-top: 1px solid var(--line);
   padding-top: 12px;

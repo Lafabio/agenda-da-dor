@@ -35,7 +35,8 @@ var CATALOG = (function () {
         { id: "tela", label: "Muito tempo na tela" },
         { id: "postura", label: "Postura ruim / pescoço duro" },
         { id: "mudanca_rotina", label: "Mudança de rotina (viagem, evento)" },
-        { id: "evento_grande", label: "Prova, apresentação ou evento" }
+        { id: "evento_grande", label: "Prova, apresentação ou evento" },
+        { id: "estudando", label: "Estava estudando / aula" }
       ]
     },
     {
@@ -97,6 +98,14 @@ var CATALOG = (function () {
         { id: "fumo", label: "Fumo / cigarro (inclusive passivo)" },
         { id: "jejum", label: "Jejum ou dieta muito restritiva" }
       ]
+    },
+    {
+      id: "outros",
+      name: "Outros",
+      color: "#64748B",
+      triggers: [
+        { id: "outro", label: "Outro fator (ver anotação)" }
+      ]
     }
   ];
 
@@ -147,7 +156,38 @@ var CATALOG = (function () {
         { id: "evitar_gatilho", label: "Sair do ruído/luz ou parar a atividade" },
         { id: "planejar", label: "Reorganizar o dia / dormir mais cedo" }
       ]
+    },
+    {
+      id: "outros",
+      name: "Outros",
+      color: "#64748B",
+      items: [
+        { id: "outro", label: "Outro alívio (ver anotação)" }
+      ]
     }
+  ];
+
+  var painTypes = [
+    { id: "pulsante", label: "Pulsante" },
+    { id: "pressao", label: "Pressão" },
+    { id: "fisgada", label: "Fisgada" },
+    { id: "dormencia", label: "Dormência" },
+    { id: "sensibilidade", label: "Sensibilidade ao toque" },
+    { id: "brainzaps", label: "Brain zaps" },
+    { id: "outra", label: "Outra" }
+  ];
+
+  var activities = [
+    { id: "estudando", label: "Estudando / aula" },
+    { id: "atividade_fisica", label: "Atividade física" },
+    { id: "tela", label: "No celular / computador" },
+    { id: "trabalhando", label: "Trabalhando" },
+    { id: "casa", label: "Tarefas de casa" },
+    { id: "social", label: "Festa / rolê" },
+    { id: "descanso", label: "Descansando" },
+    { id: "transporte", label: "No ônibus / caminhando" },
+    { id: "sem_mudanca", label: "Nada em especial" },
+    { id: "outra", label: "Outra (anotar)" }
   ];
 
   var locations = [
@@ -158,6 +198,7 @@ var CATALOG = (function () {
     { id: "tempa_dir", label: "Têmpora direita" },
     { id: "rosto", label: "Rosto / mandíbula" },
     { id: "nuca", label: "Nuca" },
+    { id: "occipital", label: "Região occipital (parte de trás)" },
     { id: "pescoco", label: "Pescoço" },
     { id: "lado_esq", label: "Metade esquerda da cabeça" },
     { id: "lado_dir", label: "Metade direita da cabeça" },
@@ -252,6 +293,20 @@ var CATALOG = (function () {
     return { id: id, label: id };
   }
 
+  function findPainType(id) {
+    for (var i = 0; i < painTypes.length; i++) {
+      if (painTypes[i].id === id) return painTypes[i];
+    }
+    return null;
+  }
+
+  function findActivity(id) {
+    for (var i = 0; i < activities.length; i++) {
+      if (activities[i].id === id) return activities[i];
+    }
+    return null;
+  }
+
   function intensityInfo(value) {
     for (var i = 0; i < intensityLabels.length; i++) {
       if (value <= intensityLabels[i].max) return intensityLabels[i];
@@ -262,6 +317,8 @@ var CATALOG = (function () {
   return {
     triggerGroups: triggerGroups,
     reliefGroups: reliefGroups,
+    painTypes: painTypes,
+    activities: activities,
     locations: locations,
     symptoms: symptoms,
     moods: moods,
@@ -273,6 +330,8 @@ var CATALOG = (function () {
     monthLabelsShort: monthLabelsShort,
     findTrigger: findTrigger,
     findRelief: findRelief,
+    findPainType: findPainType,
+    findActivity: findActivity,
     findLocation: findLocation,
     findSymptom: findSymptom,
     intensityInfo: intensityInfo

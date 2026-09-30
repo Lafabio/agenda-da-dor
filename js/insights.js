@@ -245,6 +245,56 @@ var Insights = (function () {
     });
   }
 
+  /* Distribuição do tipo de dor (pulsante, fisgada, pressão, outra). */
+  function painTypeRanking(episodes) {
+    var map = {};
+    var total = 0;
+    episodes.forEach(function (ep) {
+      if (!ep.painType) return;
+      map[ep.painType] = (map[ep.painType] || 0) + 1;
+      total++;
+    });
+    return {
+      total: total,
+      items: CATALOG.painTypes
+        .filter(function (t) { return map[t.id]; })
+        .map(function (t) {
+          return {
+            id: t.id,
+            label: t.label,
+            count: map[t.id],
+            percent: total ? Math.round((map[t.id] / total) * 100) : 0
+          };
+        })
+        .sort(function (a, b) { return b.count - a.count; })
+    };
+  }
+
+  /* O que a pessoa estava fazendo no início das crises. */
+  function activityRanking(episodes) {
+    var map = {};
+    var total = 0;
+    episodes.forEach(function (ep) {
+      if (!ep.activity) return;
+      map[ep.activity] = (map[ep.activity] || 0) + 1;
+      total++;
+    });
+    return {
+      total: total,
+      items: Object.keys(map)
+        .map(function (id) {
+          var found = CATALOG.findActivity(id);
+          return {
+            id: id,
+            label: found ? found.label : id,
+            count: map[id],
+            percent: total ? Math.round((map[id] / total) * 100) : 0
+          };
+        })
+        .sort(function (a, b) { return b.count - a.count; })
+    };
+  }
+
   function locationsRanking(episodes) {
     return countList(episodes, "locations", function (id) {
       var l = CATALOG.findLocation(id);
@@ -294,7 +344,7 @@ var Insights = (function () {
   }
 
   /* Frases-guia geradas a partir dos dados. */
-  function buildNarrative(summary, triggers, reliefs, weekday, collected) {
+  function buildNarrative(summary, triggers, reliefs, weekday, collected, painTypes, activities) {
     var lines = [];
 
     if (summary.episodes === 0) {
@@ -348,6 +398,20 @@ var Insights = (function () {
       lines.push("Houve crises muito fortes (intensidade " + summary.maxIntensity + "/10). Leve este relatório ao seu médico.");
     }
 
+    if (painTypes && painTypes.total && painTypes.items.length) {
+      var topType = painTypes.items[0];
+      lines.push("Tipo de dor mais frequente: " + topType.label.toLowerCase() +
+        " (" + topType.percent + "% das crises com tipo registrado).");
+    }
+
+    if (activities && activities.total && activities.items.length) {
+      var topAct = activities.items[0];
+      if (topAct.id !== "sem_mudanca") {
+        lines.push("No momento em que as crises começaram, você mais estava: " +
+          topAct.label.toLowerCase() + " (" + topAct.percent + "% das crises).");
+      }
+    }
+
     return lines;
   }
 
@@ -363,7 +427,9 @@ var Insights = (function () {
     var hours = hourStats(episodes);
     var symptoms = symptomsRanking(episodes);
     var locations = locationsRanking(episodes);
-    var narrative = buildNarrative(summary, triggers, reliefs, weekday, collected);
+    var painTypes = painTypeRanking(episodes);
+    var activities = activityRanking(episodes);
+    var narrative = buildNarrative(summary, triggers, reliefs, weekday, collected, painTypes, activities);
 
     return {
       monthKey: monthKey,
@@ -376,6 +442,8 @@ var Insights = (function () {
       hours: hours,
       symptoms: symptoms,
       locations: locations,
+      painTypes: painTypes,
+      activities: activities,
       narrative: narrative
     };
   }

@@ -184,6 +184,17 @@
           <p>Clique em <strong>Baixar PDF</strong> e na janela de impressao escolha destino <strong>"Salvar como PDF"</strong> (no celular: <em>Salvar em Arquivos</em>). O nome do arquivo ja vem preenchido.</p>
         </div>
 
+        <div class="card">
+          <div class="card-head">
+            <h2>Percebi algum padrão ou possível gatilho?</h2>
+            <span class="pill pill-ghost" id="reportNotePill">vai para o PDF</span>
+          </div>
+          <p class="muted">Escreva com suas palavras o que você percebeu neste mês — o que a neurologista pede no "Resumo". Aparece no relatório.</p>
+          <label class="field">
+            <textarea id="reportNote" rows="3" maxlength="500" placeholder="Ex.: as crises aumentaram nas semanas de prova e sempre depois de dormir menos de 6h..."></textarea>
+          </label>
+        </div>
+
         <div id="reportPreview" class="report-preview"></div>
       </section>
 
@@ -287,8 +298,8 @@
         </div>
 
         <label class="field">
-          <span>Anotação <small>(opcional)</small></span>
-          <textarea name="notes" rows="2" maxlength="300" placeholder="Ex.: dia de prova, festa na escola..."></textarea>
+          <span>Anotação <small>(opcional — use também para o "Outro" que marcou)</small></span>
+          <textarea name="notes" rows="2" maxlength="300" placeholder="Ex.: dia de prova, festa na escola, outro motivo que não estava na lista..."></textarea>
         </label>
 
         <div class="modal-actions">
@@ -333,9 +344,38 @@
         </div>
 
         <div class="field">
+          <span class="field-title">Tipo de dor <small>(escolha um)</small></span>
+          <div class="segmented segmented-wrap" id="painTypeField">
+            <label><input type="radio" name="painType" value="pulsante" /><span>Pulsante</span></label>
+            <label><input type="radio" name="painType" value="pressao" /><span>Pressão</span></label>
+            <label><input type="radio" name="painType" value="fisgada" /><span>Fisgada</span></label>
+            <label><input type="radio" name="painType" value="dormencia" /><span>Dormência</span></label>
+            <label><input type="radio" name="painType" value="sensibilidade" /><span>Sensibilidade ao toque</span></label>
+            <label><input type="radio" name="painType" value="brainzaps" /><span>Brain zaps</span></label>
+            <label><input type="radio" name="painType" value="outra" /><span>Outra</span></label>
+          </div>
+        </div>
+
+        <div class="field">
           <span class="field-title">Intensidade da dor <output id="epIntensityOut">5/10 — Moderada</output></span>
           <input type="range" class="intensity-range" name="intensity" min="1" max="10" step="1" value="5" data-out="epIntensityOut" data-format="pain" />
           <div class="scale-marks"><span>1</span><span>3</span><span>5</span><span>7</span><span>10</span></div>
+        </div>
+
+        <div class="field">
+          <span class="field-title">O que eu estava fazendo? <small>(quando começou ou no início da dor)</small></span>
+          <div class="chip-row segmented-single" id="activityField">
+            <label class="chip"><input type="radio" name="activity" value="estudando" /><span>Estudando / aula</span></label>
+            <label class="chip"><input type="radio" name="activity" value="atividade_fisica" /><span>Atividade física</span></label>
+            <label class="chip"><input type="radio" name="activity" value="tela" /><span>No celular / computador</span></label>
+            <label class="chip"><input type="radio" name="activity" value="trabalhando" /><span>Trabalhando</span></label>
+            <label class="chip"><input type="radio" name="activity" value="casa" /><span>Tarefas de casa</span></label>
+            <label class="chip"><input type="radio" name="activity" value="social" /><span>Festa / rolê</span></label>
+            <label class="chip"><input type="radio" name="activity" value="descanso" /><span>Descansando</span></label>
+            <label class="chip"><input type="radio" name="activity" value="transporte" /><span>No ônibus / caminhando</span></label>
+            <label class="chip"><input type="radio" name="activity" value="sem_mudanca" /><span>Nada em especial</span></label>
+            <label class="chip"><input type="radio" name="activity" value="outra" /><span>Outra (anotar)</span></label>
+          </div>
         </div>
 
         <div class="field">
@@ -354,6 +394,7 @@
           </div>
           <div class="chip-row" id="extraLocations">
             <label class="chip"><input type="checkbox" name="locations" value="nuca" /><span>Nuca</span></label>
+            <label class="chip"><input type="checkbox" name="locations" value="occipital" /><span>Occipital (parte de trás)</span></label>
             <label class="chip"><input type="checkbox" name="locations" value="pescoco" /><span>Pescoço</span></label>
             <label class="chip"><input type="checkbox" name="locations" value="lado_esq" /><span>Metade esquerda</span></label>
             <label class="chip"><input type="checkbox" name="locations" value="lado_dir" /><span>Metade direita</span></label>
@@ -372,18 +413,18 @@
         </div>
 
         <div class="field" id="reliefResultField" hidden>
-          <span class="field-title">Melhorou?</span>
+          <span class="field-title">Melhorou? <small>(quanto tempo demorou para melhorar já aparece na duração)</small></span>
           <div class="segmented segmented-wrap">
-            <label><input type="radio" name="reliefResult" value="total" /><span>Passou tudo</span></label>
-            <label><input type="radio" name="reliefResult" value="parcial" /><span>Melhorou um pouco</span></label>
-            <label><input type="radio" name="reliefResult" value="nenhum" checked /><span>Não melhorou</span></label>
+            <label><input type="radio" name="reliefResult" value="total" /><span>Sim, passou</span></label>
+            <label><input type="radio" name="reliefResult" value="parcial" /><span>Parcialmente</span></label>
+            <label><input type="radio" name="reliefResult" value="nenhum" checked /><span>Não</span></label>
             <label><input type="radio" name="reliefResult" value="na" /><span>Não tentei nada</span></label>
           </div>
         </div>
 
         <label class="field">
-          <span>Anotação <small>(opcional)</small></span>
-          <textarea name="notes" rows="2" maxlength="300" placeholder="Ex.: começou depois da aula de educação física..."></textarea>
+          <span>Sintomas / observações <small>(opcional)</small></span>
+          <textarea name="notes" rows="2" maxlength="300" placeholder="Ex.: começou depois da aula de educação física; náusea, luzes na visão..."></textarea>
         </label>
 
         <div class="modal-actions">

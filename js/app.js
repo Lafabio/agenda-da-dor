@@ -255,6 +255,7 @@ var App = (function () {
 
   function episodeRowHTML(ep, dateKey) {
     var info = CATALOG.intensityInfo(ep.intensity || 1);
+    var pt = ep.painType ? CATALOG.findPainType(ep.painType) : null;
     var locs = (ep.locations || []).map(function (id) {
       return CATALOG.findLocation(id).label;
     }).slice(0, 3).join(", ");
@@ -268,6 +269,7 @@ var App = (function () {
       '<span class="episode-time">' + esc(ep.time || "--:--") + "</span>" +
       '<span class="episode-badge" style="background:' + info.color + '">' + (ep.intensity || 0) + "/10</span>" +
       '<span class="episode-info"><strong>' + esc(info.label) +
+      (pt ? " · " + esc(pt.label) : "") +
       (ep.durationMin ? " · " + ep.durationMin + " min" : "") + "</strong>" +
       "<span>" + esc(locs || "local não marcado") + " · " + esc(reliefs) + "</span></span>" +
       "</div>";
@@ -357,6 +359,8 @@ var App = (function () {
       form.time.value = existing.time || "12:00";
       form.durationMin.value = String(existing.durationMin || 60);
       form.intensity.value = String(existing.intensity || 5);
+      setRadio(form, "painType", existing.painType || "");
+      setRadio(form, "activity", existing.activity || "");
       $all('input[name="locations"]', form).forEach(function (i) {
         i.checked = (existing.locations || []).indexOf(i.value) >= 0;
       });
@@ -397,6 +401,8 @@ var App = (function () {
       time: form.time.value || "12:00",
       durationMin: Number(form.durationMin.value),
       intensity: Number(form.intensity.value),
+      painType: getRadio(form, "painType"),
+      activity: getRadio(form, "activity"),
       locations: $all('input[name="locations"]:checked', form).map(function (i) { return i.value; }),
       symptoms: checkedValues($("#episodeSymptoms")),
       reliefs: checkedValues($("#episodeReliefs")),
@@ -668,6 +674,34 @@ var App = (function () {
             return { label: it.label, value: it.count };
           }), { labelW: 240, barMax: analysis.locations[0].count, colorFn: function () { return "#A855F7"; }, textFn: function (i) { return i.value + "x"; } })
         : '<p class="muted">Nenhum local registrado.</p>') +
+      "</div></div>";
+
+    /* Tipo de dor e atividade no início da crise */
+    html += '<div class="card"><div class="card-head"><h2>Tipo de dor e o que estava fazendo</h2></div>' +
+      '<div class="report-cols">' +
+      "<div><h4>Tipo de dor</h4>" +
+      (analysis.painTypes.total
+        ? Charts.hBars(analysis.painTypes.items.map(function (it) {
+            return { label: it.label, value: it.percent, count: it.count };
+          }), {
+            labelW: 180,
+            barMax: 100,
+            colorFn: function () { return "#F97316"; },
+            textFn: function (i) { return i.value + "% (" + i.count + "x)"; }
+          })
+        : '<p class="muted">Nenhum tipo de dor registrado. Marque no "Registrar dor".</p>') +
+      "</div>" +
+      "<div><h4>No momento em que começou</h4>" +
+      (analysis.activities.total
+        ? Charts.hBars(analysis.activities.items.slice(0, 7).map(function (it) {
+            return { label: it.label, value: it.percent, count: it.count };
+          }), {
+            labelW: 220,
+            barMax: 100,
+            colorFn: function () { return "#EC4899"; },
+            textFn: function (i) { return i.value + "% (" + i.count + "x)"; }
+          })
+        : '<p class="muted">Nada registrado ainda.</p>') +
       "</div></div></div>";
 
     /* Evolução */
@@ -685,6 +719,34 @@ var App = (function () {
   function renderReport() {
     $("#repMonthLabel").textContent = monthLabel(state.repMonth);
     $("#reportPreview").innerHTML = Report.buildHTML(state.repMonth);
+    bindReportNote();
+  }
+
+  function bindReportNote() {
+    var noteEl = document.getElementById("reportNote");
+    if (!noteEl) return;
+    noteEl.value = Store.getMonthNote(state.repMonth);
+    noteEl.setAttribute("data-month", state.repMonth);
+    if (noteEl.__bound) return;
+    noteEl.__bound = true;
+    var timer = null;
+    var save = function () {
+      var month = noteEl.getAttribute("data-month") || state.repMonth;
+      Store.setMonthNote(month, noteEl.value.trim());
+      var pill = document.getElementById("reportNotePill");
+      if (pill) {
+        pill.textContent = "salvo";
+        setTimeout(function () { pill.textContent = "vai para o PDF"; }, 1500);
+      }
+      if (month === state.repMonth) {
+        $("#reportPreview").innerHTML = Report.buildHTML(state.repMonth);
+      }
+    };
+    noteEl.addEventListener("input", function () {
+      clearTimeout(timer);
+      timer = setTimeout(save, 700);
+    });
+    noteEl.addEventListener("change", save);
   }
 
   function exportPDF() {

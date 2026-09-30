@@ -11,7 +11,8 @@ var Store = (function () {
       onboarded: false,
       createdAt: null
     },
-    logs: {}
+    logs: {},
+    notes: {}
   };
 
   function pad(n) {
@@ -86,6 +87,7 @@ var Store = (function () {
         data.settings || {}
       );
       state.logs = data.logs && typeof data.logs === "object" ? data.logs : {};
+      state.notes = data.notes && typeof data.notes === "object" ? data.notes : {};
       return true;
     } catch (err) {
       console.warn("Falha ao carregar dados:", err);
@@ -196,6 +198,7 @@ var Store = (function () {
       data.settings || {}
     );
     state.logs = data.logs;
+    state.notes = data.notes && typeof data.notes === "object" ? data.notes : {};
     save();
     return true;
   }
@@ -203,6 +206,7 @@ var Store = (function () {
   function wipe() {
     state.settings = { name: "", onboarded: false, createdAt: null };
     state.logs = {};
+    state.notes = {};
     try {
       window.localStorage.removeItem(KEY);
     } catch (err) { /* ignora */ }
@@ -211,6 +215,18 @@ var Store = (function () {
 
   function randomFrom(list) {
     return list[Math.floor(Math.random() * list.length)];
+  }
+
+  function getMonthNote(monthKey) {
+    if (!state.notes) state.notes = {};
+    return state.notes[monthKey] || "";
+  }
+
+  function setMonthNote(monthKey, text) {
+    if (!state.notes) state.notes = {};
+    if (text) state.notes[monthKey] = text;
+    else delete state.notes[monthKey];
+    save();
   }
 
   function chance(p) {
@@ -285,8 +301,10 @@ var Store = (function () {
             time: pad(9 + Math.floor(Math.random() * 11)) + ":" + randomFrom(["00", "15", "30", "45"]),
             intensity: intensity,
             durationMin: [20, 30, 45, 60, 90, 120][Math.floor(Math.random() * 6)],
+            painType: randomFrom(["pulsante", "pulsante", "pressao", "fisgada", "dormencia", "sensibilidade", "brainzaps", "outra"]),
+            activity: randomFrom(["estudando", "tela", "descanso", "atividade_fisica", "casa", "sem_mudanca"]),
             locations: [
-              randomFrom(["tempa_esq", "tempa_dir", "testa", "nuca", "lado_esq", "lado_dir"]),
+              randomFrom(["tempa_esq", "tempa_dir", "testa", "nuca", "occipital", "lado_esq", "lado_dir"]),
               ...(chance(0.4) ? ["nuca"] : [])
             ],
             symptoms: [
@@ -305,6 +323,9 @@ var Store = (function () {
     }
     state.settings.onboarded = true;
     if (!state.settings.name) state.settings.name = "Exemplo";
+    state.notes = state.notes || {};
+    state.notes[monthKeyOf(todayKey())] =
+      "Sempre pior nas semanas de prova e depois de dormir menos de 6h; evitei café nos dias fortes e ajudou.";
     save();
   }
 
@@ -336,6 +357,8 @@ var Store = (function () {
     exportJSON: exportJSON,
     importJSON: importJSON,
     wipe: wipe,
-    loadSampleData: loadSampleData
+    loadSampleData: loadSampleData,
+    getMonthNote: getMonthNote,
+    setMonthNote: setMonthNote
   };
 })();

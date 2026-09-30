@@ -90,6 +90,84 @@ var Report = (function () {
     );
   }
 
+  /* Tabela de registro das crises — espelho do formulário em papel. */
+  function episodesTableHTML(analysis) {
+    var rows = [];
+    analysis.days.forEach(function (day) {
+      day.episodes.forEach(function (ep) {
+        rows.push({ day: day, ep: ep });
+      });
+    });
+    if (!rows.length) {
+      return '<p class="muted">Nenhuma crise registrada neste mês. Use "Registrar dor" para anotar cada episódio — esta é a tabela que a neurologista pede para levar à consulta.</p>';
+    }
+    var html = '<table class="data-table table-crises"><thead><tr>' +
+      "<th>Data/hora</th><th>Int.</th><th>Tipo de dor</th><th>Onde dói?</th>" +
+      "<th>O que eu estava fazendo?</th><th>Sintomas / observações</th>" +
+      "</tr></thead><tbody>";
+    rows.forEach(function (row) {
+      var ep = row.ep;
+      var info = CATALOG.intensityInfo(ep.intensity || 1);
+      var pt = ep.painType ? CATALOG.findPainType(ep.painType) : null;
+      var act = ep.activity ? CATALOG.findActivity(ep.activity) : null;
+      var locs = (ep.locations || []).map(function (id) {
+        var f = CATALOG.findLocation(id);
+        return f ? f.label : id;
+      }).join(", ");
+      var syms = (ep.symptoms || []).map(function (id) {
+        var f = CATALOG.findSymptom(id);
+        return f ? f.label : id;
+      }).join(", ");
+      if (ep.notes) syms += (syms ? " · " : "") + "<em>" + esc(ep.notes) + "</em>";
+      html += "<tr>" +
+        "<td>" + esc(Store.formatDayShort(row.day.key)) + " " + esc(ep.time || "--:--") + "</td>" +
+        '<td><span class="tag" style="background:' + info.color + '22;color:' + info.color + '">' +
+        (ep.intensity || 0) + "/10</span></td>" +
+        "<td>" + (pt ? esc(pt.label) : "—") + "</td>" +
+        "<td>" + (locs ? esc(locs) : "—") + "</td>" +
+        "<td>" + (act ? esc(act.label) : "—") + "</td>" +
+        "<td>" + (syms || "—") + "</td>" +
+        "</tr>";
+    });
+    html += "</tbody></table>";
+    html += '<p class="muted small">' + rows.length + (rows.length === 1 ? " crise registrada" : " crises registradas") +
+      " neste mês.</p>";
+    return html;
+  }
+
+  /* Resumo por semana do mês (padrão do formulário "Resumo"). */
+  function weeklySummaryHTML(monthKey, analysis) {
+    var daysIn = Store.daysInMonth(monthKey);
+    var html = '<table class="data-table"><thead><tr>' +
+      "<th>Semana</th><th>Dias com dor</th><th>Crises</th><th>Pior intensidade</th><th>Sono médio</th>" +
+      "</tr></thead><tbody>";
+    for (var start = 1; start <= daysIn; start += 7) {
+      var end = Math.min(daysIn, start + 6);
+      var painDays = 0, eps = 0, maxI = 0, sleeps = [];
+      analysis.days.forEach(function (day) {
+        if (day.dayNum < start || day.dayNum > end) return;
+        if (day.hasPain) painDays++;
+        eps += day.episodes.length;
+        day.episodes.forEach(function (ep) {
+          if ((ep.intensity || 0) > maxI) maxI = ep.intensity || 0;
+        });
+        if (day.checkin && typeof day.checkin.sleepHours === "number") sleeps.push(day.checkin.sleepHours);
+      });
+      var avgSleep = sleeps.length
+        ? (Math.round((sleeps.reduce(function (a, b) { return a + b; }, 0) / sleeps.length) * 10) / 10)
+        : null;
+      html += "<tr>" +
+        "<td><strong>" + Store.pad(start) + "–" + Store.pad(end) + "</strong></td>" +
+        "<td>" + painDays + "</td>" +
+        "<td>" + eps + "</td>" +
+        "<td>" + (maxI ? maxI + "/10" : "—") + "</td>" +
+        "<td>" + (avgSleep != null ? String(avgSleep).replace(".", ",") + "h" : "—") + "</td>" +
+        "</tr>";
+    }
+    html += "</tbody></table>";
+    return html;
+  }
+
   function buildHTML(monthKey) {
     var analysis = Insights.analyzeMonth(monthKey);
     var s = analysis.summary;
@@ -145,8 +223,14 @@ var Report = (function () {
       '<span><i style="background:#F1EFFC;border:1px solid #DCD9F4"></i>sem registro/dor</span>' +
       "</div></section>";
 
+    /* Registro das crises (tabela do formulário da neurologista) */
+    html += '<section><h2>3. Registro das crises</h2>' +
+      '<p class="muted">Tabela do diário, como no formulário: uma linha por crise do mês.</p>' +
+      episodesTableHTML(analysis) +
+      "</section>";
+
     /* Causas */
-    html += '<section><h2>3. Possíveis causas (mapeamento de gatilhos)</h2>' +
+    html += '<section><h2>4. Possíveis causas (mapeamento de gatilhos)</h2>' +
       '<p class="muted">Comparação: em quantos dias com o fator houve dor, versus sem o fator. ' +
       'Quanto maior a diferença, maior a suspeita de ser gatilho. É correlação — não é diagnóstico.</p>';
     if (strongTriggers.length) {
@@ -179,7 +263,7 @@ var Report = (function () {
     html += "</section>";
 
     /* Benefícios */
-    html += '<section><h2>4. O que ajudou (mapeamento de benefícios)</h2>' +
+    html += '<section><h2>5. O que ajudou (mapeamento de benefícios)</h2>' +
       '<p class="muted">Registros de cada tentativa de alívio e o resultado obtido (total, parcial ou nenhum).</p>';
     var helpedItems = analysis.reliefs.filter(function (r) { return r.tried > 0; });
     if (helpedItems.length) {
@@ -199,11 +283,22 @@ var Report = (function () {
     html += "</section>";
 
     /* Padrões */
-    html += '<section><h2>5. Padrões</h2>';
+    html += '<section><h2>6. Padrões</h2>';
     html += '<div class="report-cols">';
     html += '<div><h4>Por dia da semana</h4>' + Charts.weekBars(analysis.weekday) +
       '<p class="muted small">Roxo = dias com dor; claro = dias registrados.</p></div>';
     html += '<div><h4>Horário de início das crises</h4>' + Charts.hourBars(analysis.hours) + "</div>";
+    html += "</div>";
+
+    html += '<div class="report-cols">';
+    html += '<div><h4>Tipo de dor</h4>' +
+      (analysis.painTypes.total
+        ? simpleBars(analysis.painTypes.items, "Sem registros.")
+        : '<p class="muted">Nenhum tipo de dor registrado.</p>') + "</div>";
+    html += '<div><h4>O que eu estava fazendo?</h4>' +
+      (analysis.activities.total
+        ? simpleBars(analysis.activities.items.slice(0, 7), "Sem registros.")
+        : '<p class="muted">Nada registrado ainda.</p>') + "</div>";
     html += "</div>";
 
     html += '<div class="report-cols">';
@@ -213,8 +308,19 @@ var Report = (function () {
       simpleBars(analysis.locations.slice(0, 6), "Sem locais registrados.") + "</div>";
     html += "</div></section>";
 
+    /* Resumo das semanas + padrão percebido (seção "Resumo" do formulário) */
+    var monthNote = Store.getMonthNote(monthKey);
+    html += '<section><h2>7. Resumo das semanas</h2>' +
+      '<p class="muted">Agrupamento em semanas de 7 dias, como no resumo do formulário.</p>' +
+      weeklySummaryHTML(monthKey, analysis) +
+      '<div class="report-note"><h4>Percebi algum padrão ou possível gatilho?</h4>' +
+      (monthNote
+        ? "<p>" + esc(monthNote) + "</p>"
+        : '<p class="muted">— ainda não preenchido (escreva na aba Relatório) —</p>') +
+      "</div></section>";
+
     /* Tendência */
-    html += '<section><h2>6. Evolução nos últimos meses</h2>' +
+    html += '<section><h2>8. Evolução nos últimos meses</h2>' +
       Charts.trendBars(trend) +
       '<p class="muted small">Barras = número de crises; "média" = intensidade média do mês.</p>';
     if (compare.previous) {
@@ -228,7 +334,7 @@ var Report = (function () {
     html += "</section>";
 
     /* Notas / médico */
-    html += '<section><h2>7. Para levar ao médico</h2>' +
+    html += '<section><h2>9. Para levar ao médico</h2>' +
       '<ul class="checklist">' +
       "<li>Intensidade máxima do mês: <strong>" + (s.maxIntensity || "—") + "/10</strong></li>" +
       "<li>Duração média das crises: <strong>" + (s.avgDuration || 0) + " minutos</strong></li>" +
@@ -246,8 +352,10 @@ var Report = (function () {
       "</section>";
 
     html += '<footer class="report-foot">' +
-      "<p><strong>Aviso:</strong> este relatório é um diário de observação pessoal e não substitui avaliação médica. " +
-      "Enxaqueca em adolescentes deve ser avaliada por um profissional de saúde — leve este relatório à consulta.</p>" +
+      "<p><strong>Aviso à neurologista:</strong> este relatório é um diário de observação pessoal. " +
+      "Ele <strong>não serve para diagnosticar sozinho(a)</strong> — serve para ajudar a neurologista a ver os padrões " +
+      "e conversarmos melhor na consulta. Enxaqueca em adolescentes deve ser avaliada por um profissional de saúde; " +
+      "leve este relatório à consulta.</p>" +
       "<p>Agenda da Dor · dados salvos apenas neste dispositivo · gerado em " +
       Store.formatDay(Store.toKey(generated)) + "</p>" +
       "</footer>";
